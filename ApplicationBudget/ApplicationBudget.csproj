@@ -376,6 +376,12 @@
     <Compile Include="Pages\Participants\AjouterParticipant.Designer.cs">
       <DependentUpon>AjouterParticipant.cs</DependentUpon>
     </Compile>
+    <Compile Include="Utilities\frmPassword.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Utilities\frmPassword.Designer.cs">
+      <DependentUpon>frmPassword.cs</DependentUpon>
+    </Compile>
     <Compile Include="Utilities\MessageType.cs" />
     <Compile Include="Utilities\frmPopup.cs">
       <SubType>Form</SubType>
@@ -456,6 +462,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Pages\Participants\AjouterParticipant.resx">
       <DependentUpon>AjouterParticipant.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Utilities\frmPassword.resx">
+      <DependentUpon>frmPassword.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Utilities\frmPopup.resx">
       <DependentUpon>frmPopup.cs</DependentUpon>

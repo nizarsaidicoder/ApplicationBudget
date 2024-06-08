@@ -13,6 +13,7 @@ using System.Windows.Forms;
 //Mail
 using System.Net.Mail;
 using System.Net;
+using ApplicationBudget.Utilities;
 
 namespace ApplicationBudget
 {
@@ -59,29 +60,25 @@ namespace ApplicationBudget
                 txtTitre.BackColor = Color.LightCoral;
                 missingTerm = true;
             }
-            if (txtDescription.Text == string.Empty)
-            {
-                txtDescription.BackColor = Color.LightCoral;
-                missingTerm = true;
-            }
             if (!missingTerm)
             {
                 string dateDebut = getDateFromPicker(dateDebutPicker.Value.Year, dateDebutPicker.Value.Month, dateDebutPicker.Value.Day);
                 string dateFin = getDateFromPicker(dateFinPicker.Value.Year, dateFinPicker.Value.Month, dateFinPicker.Value.Day);
 
                 ajouterEvent(txtTitre.Text, cboEvenements.Text, dateDebut, dateFin, txtDescription.Text);
-                //ajouterInvite()
-                ClearControl();
-
-                //Envoye du Mail:
-                MailAddress from = new MailAddress("nizar.saidi@etu.unistra.fr", "MoneyCut");
-                MailAddress to = new MailAddress("remy.huffenus@etu.unistra.fr", "Remy Huffenus");
-                //List<MailAddress> cc = new List<MailAddress>();
-                //cc.Add(new MailAddress("Someone@domain.topleveldomain", "Name and stuff"));
+                foreach (int var in invites)
+                {
+                    string loginMdp = generateLoginAndPasswordFromId(var);
+                    ajouterInvite(getEventID(txtTitre.Text), var, loginMdp, loginMdp);
+                }
 
                 //Ajouter des parametre pour chaque event plus tard
-                //SendEmail("Nouvel evenement!", from, to);
+                SendEmail("Nouvel évènement de " + cboEvenements.Text, dateDebut, dateFin, txtTitre.Text);
+                frmPopup modal = new frmPopup("Evénement bien ajouté", MessageType.Done);
+                modal.ShowDialog();
             }
+            ClearControl();
+
         }
 
         public void ajouterEvent(string titre, string organisateur, string dateDebut, string dateFin, string description)
@@ -110,8 +107,7 @@ namespace ApplicationBudget
                 query += $"'{titre}', '{dateDebut}', '{dateFin}',  '{description}', 0, '{codeCreateur}');";
                 cm.CommandText = query;
                 cm.ExecuteNonQuery();
-                frmPopup modal = new frmPopup("Evénement bien ajouté", MessageType.Done);
-                modal.ShowDialog();
+                
             }
             catch (SQLiteException err)
             {
@@ -130,8 +126,83 @@ namespace ApplicationBudget
                 MessageBox.Show(ex.Message);
             }
             EventAdded(this, new EventArgs());
-            ClearControl();
             
+        }
+        public void ajouterInvite(int codeEvent, int codePart, string login, string mdp)
+        {
+            SQLiteCommand cm = new SQLiteCommand();
+
+            cm.Connection = frmMain.connection;
+            try
+            {
+                //Recuperation du code Orga
+                frmMain.connection.Open();
+
+                string query = "INSERT INTO Invites(codeEvent, codePart, login, mdp) VALUES (";
+                query += $"'{codeEvent}', '{codePart}', '{login}', '{mdp}');";
+                cm.CommandText = query;
+                cm.ExecuteNonQuery();
+            }
+            catch (SQLiteException err)
+            {
+                MessageBox.Show(err.Message);
+            }
+            finally
+            {
+                frmMain.connection.Close();
+            }
+        }
+        public int getEventID(string eventID)
+        {
+            string query = "SELECT codeEvent FROM Evenements where titreEvent = '" + eventID + "';";
+
+            SQLiteCommand cm = new SQLiteCommand();
+            cm.Connection = frmMain.connection;
+            cm.CommandText = query;
+            try
+            {
+                //Recuperation du code Orga
+                frmMain.connection.Open();
+                int codeEvent = Convert.ToInt32(cm.ExecuteScalar());
+                return codeEvent;
+            }
+            catch (SQLiteException err)
+            {
+                MessageBox.Show(err.Message);
+            }
+            finally
+            {
+                frmMain.connection.Close();
+            }
+            return 0;
+        }
+        public string generateLoginAndPasswordFromId(int codePart)
+        {
+            string login = "";
+            string query = "SELECT prenomPart FROM Participants where codeParticipant = '" + codePart + "';";
+
+            SQLiteCommand cm = new SQLiteCommand();
+            cm.Connection = frmMain.connection;
+            cm.CommandText = query;
+            try
+            {
+
+                frmMain.connection.Open();
+                login = Convert.ToString(cm.ExecuteScalar());
+
+                query = "SELECT nomPart FROM Participants where codeParticipant = '" + codePart + "';";
+                login = login[0] + Convert.ToString(cm.ExecuteScalar());
+                return login;
+            }
+            catch (SQLiteException err)
+            {
+                MessageBox.Show(err.Message);
+            }
+            finally
+            {
+                frmMain.connection.Close();
+            }
+            return null;
         }
 
         public void AddEventLocally(string titre, int codeCreateur, string organisateur ,string dateDebut, string dateFin, string description)
@@ -175,23 +246,52 @@ namespace ApplicationBudget
 
         //Ajout de la fonction pour envoyer le mail
         //Il faut personaliser le mail pour chaque event + envoyer un mail par invité
-        protected void SendEmail(string _subject, MailAddress _from, MailAddress _to)
+        protected void SendEmail(string _subject, string dateDebut, string dateFin, string titreEvent)
         {
             SmtpClient mailClient = new SmtpClient("partage.unistra.fr");
             MailMessage msgMail = new MailMessage();
 
-            string Text = "Vous êtes inviter a participer a l'evenement";
-            msgMail.From = _from;
-            msgMail.To.Add(_to);
+            string Text = "Vous êtes inviter a participer a l'evenement: \"" + titreEvent + "\" \n l'évenement auras lieu du " + dateDebut + " au " + dateFin;
             msgMail.Subject = _subject;
             msgMail.Body = Text;
+            frmPassword frmPassword = new frmPassword();
+            if (frmPassword.ShowDialog() == DialogResult.OK)
+            {
+                MailAddress _from = new MailAddress(frmPassword.mail);
+                mailClient.Credentials = new NetworkCredential(_from.Address, frmPassword.password);
+                msgMail.From = _from;
+            }
+            SQLiteConnection connection = new SQLiteConnection(frmMain.cnxString);
+            connection.Open();
+            for (int i = 0; i < invites.Count + 1; i++)
+            {
+                if(i == invites.Count)
+                {
+                    MailAddress _to = new MailAddress("nizar.saidi.coder@gmail.com");
+                    msgMail.To.Add(_to);
+                    mailClient.Port = 587;
+                    mailClient.EnableSsl = true;
+                    mailClient.Send(msgMail);
+                }
+                try
+                {
+                    string query = $"SELECT adresseMail FROM Participants WHERE codeParticipant = {invites.ElementAt(i)}";
+                    SQLiteCommand cm = new SQLiteCommand(query, connection);
+                    string mail = Convert.ToString(cm.ExecuteScalar());
+                    MailAddress _to = new MailAddress(mail);
+                    msgMail.To.Add(_to);
+                    mailClient.Port = 587;
+                    mailClient.EnableSsl = true;
+                    mailClient.Send(msgMail);
+                }
+                catch (Exception ex)
+                {
+                    //MessageBox.Show(ex.Message);
+                }
+            }
+            mailClient.Dispose();
+            connection.Close();
 
-            mailClient.Port = 587;
-            mailClient.Credentials = new NetworkCredential(_from.Address, "password"); //Mettre mdp entre les guillemet
-            mailClient.EnableSsl = true;
-
-            mailClient.Send(msgMail);
-            msgMail.Dispose();
         }
 
         private void btnAnnuler_Click(object sender, EventArgs e)
