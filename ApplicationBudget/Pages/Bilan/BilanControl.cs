@@ -125,35 +125,6 @@ namespace ApplicationBudget
             return table;
         }
 
-        /*        public DataTable DepensesQuiMeConcernent(DataSet ds, int participant, int evenement)
-                {
-                    DataTable table = new DataTable();
-
-                    try
-                    {
-                        DataRow[] dr = ds.Tables["BenefDepenses"].Select($"codeEvent = {evenement} AND codePart = {participant}");
-                        foreach (DataRow row in dr)
-                        {
-                            DataRow[] results = ds.Tables["SommeParts"].Select($"numDepense = {row["numDepense"]}", "numDepense, montant");
-                            DataTable tableResult = results.CopyToDataTable();
-                            table.Merge(tableResult);
-                        }
-
-                        table = dr.CopyToDataTable();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }
-
-                    return table;
-                }*/
-
-        //Génération UC Dépense
-        /*Depense depense = new Depense("gezgze","fezfgzeg","15-02-2024",28,"Alimentation");
-        depense.Dock = DockStyle.Top;
-        panelDepensesItems.Controls.Add(depense);*/
-
         public void MajDepenses(DataTable dt)
         {
             panelDepensesItems.Controls.Clear();
@@ -187,9 +158,9 @@ namespace ApplicationBudget
             dtBilan.PrimaryKey = new DataColumn[] { dtBilan.Columns["codeParticipant"] };
 
 
-            //récupération de tous les participants de l'événement
             DataSet ds = frmMain.localDataSet;
 
+            //récupération de tous les participants de l'événement
             DataRow[] dr = ds.Tables["Invites"].Select($"codeEvent = {evenement}");
             DataTable tableParticipants = dr.CopyToDataTable();
 
@@ -355,16 +326,7 @@ namespace ApplicationBudget
                 {
                     if (Convert.ToInt32(bilan.Rows[i]["codeParticipant"]) == part)
                     {
-                        double ancienmontant;
-                        if (bilan.Rows[i]["Plus"] == null)
-                        {
-                            ancienmontant = 0;
-                        }
-                        else
-                        {
-                            ancienmontant = Convert.ToDouble(bilan.Rows[i]["Plus"]);
-                        }
-
+                        double ancienmontant = Convert.ToDouble(bilan.Rows[i]["Plus"]);
                         //on ajoute la dépense
                         bilan.Rows[i]["Plus"] = ancienmontant + montant;
                     }
@@ -464,20 +426,6 @@ namespace ApplicationBudget
             {
                 DataTable table = MesDepenses(frmMain.localDataSet, Convert.ToInt32(cboParticipants.SelectedValue), Convert.ToInt32(cboEvents.SelectedValue));
                 MajDepenses(table);
-
-                /*try
-                {
-                    cboParticipants.Items.Clear();
-                    //cboParticipants.DataSource = frmMain.localDataSet.Tables["Participants"];
-                    cboParticipants.DisplayMember = RecupNomParticipant(Convert.ToInt32(frmMain.localDataSet.Tables["Participants"].Columns["codePart"]));
-                    cboParticipants.ValueMember = frmMain.localDataSet.Tables["Participants"].Columns["codePart"].ToString();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                    //frmPopup frmPopup = new frmPopup(ex.ToString(), MessageType.Error);
-                    //frmPopup.ShowDialog();
-                }*/
             }
 
             panelRemboursementsItems.Controls.Clear();
@@ -510,8 +458,7 @@ namespace ApplicationBudget
             }
             else
             {
-
-                frmPopup confirmation = new frmPopup("Les bilans ont été bien enregistré", MessageType.Done);
+                frmPopup confirmation = new frmPopup("Les bilans ont bien été générer", MessageType.Done);
                 if(confirmation.ShowDialog() == DialogResult.OK) System.Diagnostics.Process.Start("explorer.exe", path);
             }
             ClearControls();

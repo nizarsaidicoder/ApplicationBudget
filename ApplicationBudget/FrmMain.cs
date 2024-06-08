@@ -175,7 +175,7 @@ namespace ApplicationBudget
             }
         }
         /// <summary>
-        /// Charge de toutes les tables de la base de données dans un DataSet local
+        /// Charge toutes les tables de la base de données dans un DataSet local
         /// </summary>
         /// <param name="connec">Connexion à la base de données</param>
         /// <param name="ds">DataSet</param>
@@ -201,20 +201,6 @@ namespace ApplicationBudget
                     " FROM Depenses as d JOIN Participants as p ON d.codePart = p.codeParticipant";
                 da = new SQLiteDataAdapter(requete, connec);
                 da.Fill(ds, "CategDepensePart");
-
-                /*//join tables pour les remboursements
-                requete = "SELECT DISTINCT d.numDepense, d.montant, SUM(p.nbParts) AS SommeNbParts" +
-                    " FROM Depenses AS d" +
-                    " JOIN Beneficiaires AS b ON d.numDepense = b.numDepense" +
-                    " JOIN Participants AS p ON b.codePart = p.codeParticipant";
-                da = new SQLiteDataAdapter(requete, connec);
-                da.Fill(ds, "SommeParts");
-
-                //join tables pour les bénéficiaires
-                requete = "SELECT DISTINCT d.numDepense, d.codeEvent, d.codePart FROM Beneficiaires AS b JOIN Depenses d ON b.numDepense = d.numDepense";
-                da = new SQLiteDataAdapter(requete, connec);
-                da.Fill(ds, "BenefDepenses");*/
-
 
                 //ajout contraintes
                 AjoutClesPrimaires(ds);
@@ -252,10 +238,6 @@ namespace ApplicationBudget
             ds.Tables["Participants"].PrimaryKey = new DataColumn[] { ds.Tables["Participants"].Columns["codeParticipant"] };
             //CategDepensePart
             ds.Tables["CategDepensePart"].PrimaryKey = new DataColumn[] { ds.Tables["CategDepensePart"].Columns["numDepense"], ds.Tables["CategDepensePart"].Columns["codeEvent"], ds.Tables["CategDepensePart"].Columns["codePart"], ds.Tables["CategDepensePart"].Columns["nomCateg"] };
-            /*//SommeParts
-            ds.Tables["SommeParts"].PrimaryKey = new DataColumn[] { ds.Tables["SommeParts"].Columns["numDepense"] };
-            //BenefDepenses
-            ds.Tables["BenefDepenses"].PrimaryKey = new DataColumn[] { ds.Tables["BenefDepenses"].Columns["numDepense"]};*/
 
         }
         /// <summary>
@@ -344,27 +326,6 @@ namespace ApplicationBudget
             fk = new ForeignKeyConstraint("fk_Depenses_CategDepensePart", parent, enfant);
             ds.Tables["CategDepensePart"].Constraints.Add(fk);
 
-            /*//SommeParts
-            parent = ds.Tables["Depenses"].Columns["numDepense"];
-            enfant = ds.Tables["SommeParts"].Columns["numDepense"];
-            fk = new ForeignKeyConstraint("fk_Depenses_SommeParts", parent, enfant);
-            ds.Tables["SommeParts"].Constraints.Add(fk);
-
-            //BenefDepenses
-            parent = ds.Tables["Evenements"].Columns["codeEvent"];
-            enfant = ds.Tables["BenefDepenses"].Columns["codeEvent"];
-            fk = new ForeignKeyConstraint("fk_Evenements_BenefDepenses", parent, enfant);
-            ds.Tables["BenefDepenses"].Constraints.Add(fk);
-
-            parent = ds.Tables["Participants"].Columns["codeParticipant"];
-            enfant = ds.Tables["BenefDepenses"].Columns["codePart"];
-            fk = new ForeignKeyConstraint("fk_Participants_BenefDepenses", parent, enfant);
-            ds.Tables["BenefDepenses"].Constraints.Add(fk);
-
-            parent = ds.Tables["Depenses"].Columns["numDepense"];
-            enfant = ds.Tables["BenefDepenses"].Columns["numDepense"];
-            fk = new ForeignKeyConstraint("fk_Depenses_BenefDepenses", parent, enfant);
-            ds.Tables["BenefDepenses"].Constraints.Add(fk);*/
         }
     }
 }
