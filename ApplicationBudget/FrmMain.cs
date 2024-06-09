@@ -15,7 +15,8 @@ namespace ApplicationBudget
 {
     public partial class frmMain : Form
     {
-        public static String cnxString = $"Data Source= Events.sqlite";
+        public static string databasePath =  Path.Combine(Directory.GetParent(Application.StartupPath).Parent.FullName, "Database", "Events.sqlite");
+        public static String cnxString = $"Data Source= {databasePath}";
         public static SQLiteConnection connection = new SQLiteConnection(cnxString);
         public static DataSet localDataSet = new DataSet();
         public frmMain()

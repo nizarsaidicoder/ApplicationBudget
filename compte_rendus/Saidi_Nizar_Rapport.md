@@ -24,5 +24,5 @@ Les difficultés rencontrées dans ce projet étaient principalement des problè
 
 - Git : J'ai eu des difficultés à utiliser Git pour gérer les versions du projet et à résoudre les conflits de fusion.
   à cause de la mal gestion du .gitignore l'application ne fonctionnait plus correctement. alors j'ai du reprendre le projet depuis le début.
-- PDFSharp : J'ai eu des difficultés à utiliser la bibliothèque PDFSharp pour générer des fichiers PDF à partir des données de l'application.
+- PDFSharp : J'ai eu des difficultés à utiliser la bibliothèque PDFSharp pour générer des fichiers PDF.
 - Windows Form : Il est vraiement très difficile de travailler avec Windows Form, car parfois il s'actualise pas correctement et il faut redémarrer l'application pour voir les modifications. et nos forms changent de taille et de position à chaque fois d'un ordinateur à un autre.

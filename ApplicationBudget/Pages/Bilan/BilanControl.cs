@@ -162,69 +162,76 @@ namespace ApplicationBudget
 
             //récupération de tous les participants de l'événement
             DataRow[] dr = ds.Tables["Invites"].Select($"codeEvent = {evenement}");
-            DataTable tableParticipants = dr.CopyToDataTable();
-
-            foreach (DataRow row in tableParticipants.Rows)
+            try
             {
-                if (!dtBilan.Rows.Contains(row["CodePart"]))
+                DataTable tableParticipants = dr.CopyToDataTable();
+
+                foreach (DataRow row in tableParticipants.Rows)
                 {
-                    DataRow ajoutPart = dtBilan.NewRow();
-                    ajoutPart["CodeParticipant"] = row["CodePart"];
-                    //ajoutPart["Personne"] = row["nomPart"];
-                    ajoutPart["Plus"] = 0;
-                    ajoutPart["Moins"] = 0;
-                    ajoutPart["Solde"] = 0;
-                    dtBilan.Rows.Add(ajoutPart);
-                }
-                DepensesCredit(evenement, Convert.ToInt32(row["codePart"]), dtBilan);
-                DepensesDebit(evenement, Convert.ToInt32(row["codePart"]), dtBilan);
-            }
-
-            foreach (DataRow row in dtBilan.Rows)
-            {
-                row["Solde"] = Convert.ToDouble(row["Plus"]) - Convert.ToDouble(row["Moins"]);
-            }
-
-            for (int i = 0; i < dtBilan.Rows.Count; i++)
-            {
-                int donneur = IndexMin(dtBilan);
-                int receveur = IndexMax(dtBilan);
-
-                double montantMin = Convert.ToDouble(dtBilan.Rows[donneur]["Solde"]);
-                double montantMax = Convert.ToDouble(dtBilan.Rows[receveur]["Solde"]);
-
-                int codeDonneur = Convert.ToInt32(dtBilan.Rows[donneur]["CodeParticipant"]);
-                int codeReceveur = Convert.ToInt32(dtBilan.Rows[receveur]["CodeParticipant"]);
-
-                if (Math.Abs(montantMin) > montantMax)
-                {
-                    dtBilan.Rows[donneur]["Solde"] = montantMin + montantMax;
-                    dtBilan.Rows[receveur]["Solde"] = 0;
-                    if (montantMax != 0.0)
+                    if (!dtBilan.Rows.Contains(row["CodePart"]))
                     {
-                        if (!RemboursementEffectuer(evenement, codeDonneur, codeReceveur))
+                        DataRow ajoutPart = dtBilan.NewRow();
+                        ajoutPart["CodeParticipant"] = row["CodePart"];
+                        //ajoutPart["Personne"] = row["nomPart"];
+                        ajoutPart["Plus"] = 0;
+                        ajoutPart["Moins"] = 0;
+                        ajoutPart["Solde"] = 0;
+                        dtBilan.Rows.Add(ajoutPart);
+                    }
+                    DepensesCredit(evenement, Convert.ToInt32(row["codePart"]), dtBilan);
+                    DepensesDebit(evenement, Convert.ToInt32(row["codePart"]), dtBilan);
+                }
+
+                foreach (DataRow row in dtBilan.Rows)
+                {
+                    row["Solde"] = Convert.ToDouble(row["Plus"]) - Convert.ToDouble(row["Moins"]);
+                }
+
+                for (int i = 0; i < dtBilan.Rows.Count; i++)
+                {
+                    int donneur = IndexMin(dtBilan);
+                    int receveur = IndexMax(dtBilan);
+
+                    double montantMin = Convert.ToDouble(dtBilan.Rows[donneur]["Solde"]);
+                    double montantMax = Convert.ToDouble(dtBilan.Rows[receveur]["Solde"]);
+
+                    int codeDonneur = Convert.ToInt32(dtBilan.Rows[donneur]["CodeParticipant"]);
+                    int codeReceveur = Convert.ToInt32(dtBilan.Rows[receveur]["CodeParticipant"]);
+
+                    if (Math.Abs(montantMin) > montantMax)
+                    {
+                        dtBilan.Rows[donneur]["Solde"] = montantMin + montantMax;
+                        dtBilan.Rows[receveur]["Solde"] = 0;
+                        if (montantMax != 0.0)
                         {
-                            MajBilanPart(evenement, codeDonneur, codeReceveur, Math.Abs(montantMax));
+                            if (!RemboursementEffectuer(evenement, codeDonneur, codeReceveur))
+                            {
+                                MajBilanPart(evenement, codeDonneur, codeReceveur, Math.Abs(montantMax));
+                            }
                         }
                     }
-                }
-                else
-                {
-                    dtBilan.Rows[receveur]["Solde"] = montantMin + montantMax;
-                    dtBilan.Rows[donneur]["Solde"] = 0;
-                    if (montantMin != 0.0)
+                    else
                     {
-                        if (!RemboursementEffectuer(evenement, codeDonneur, codeReceveur))
+                        dtBilan.Rows[receveur]["Solde"] = montantMin + montantMax;
+                        dtBilan.Rows[donneur]["Solde"] = 0;
+                        if (montantMin != 0.0)
                         {
-                            MajBilanPart(evenement, codeDonneur, codeReceveur, Math.Abs(montantMin));
+                            if (!RemboursementEffectuer(evenement, codeDonneur, codeReceveur))
+                            {
+                                MajBilanPart(evenement, codeDonneur, codeReceveur, Math.Abs(montantMin));
+                            }
                         }
                     }
+
+                    //dgvTest.DataSource = dtBilan;
                 }
-
-                //dgvTest.DataSource = dtBilan;
             }
-
-
+            catch (Exception ex)
+            {
+                //MessageBox.Show("CalculRemboursement : " + ex.ToString());
+                frmPopup confirmation = new frmPopup("Une erreur est survenue", MessageType.Error);
+                confirmation.ShowDialog();
+            }
             return dtBilan;
         }
 
